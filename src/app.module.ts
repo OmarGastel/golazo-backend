@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';  // ✅ Importa ConfigModule correctamente
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ScheduleModule } from '@nestjs/schedule'; // ✅ Importamos ScheduleModule
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,7 +14,6 @@ import { LeagueModule } from './league/league.module';
 import { CarRentalModule } from './car-rental/car-rental.module';
 import { ResultsModule } from './results/results.module';
 import { LodgingModule } from './lodging/lodging.module';
-import 'dotenv/config';
 
 import { JWTAuthorize } from './middleware/JWTAuthorization.middleware';
 import { ResultsController } from './results/results.controller';
@@ -27,10 +26,13 @@ import { User, UserSchema } from './schemas/user.schema';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({isGlobal: true}),  // ✅ Configuración de variables de entorno
-    MongooseModule.forRoot(process.env.DATABASE), // ✅ Conexión a la base de datos
+    ConfigModule.forRoot({
+      isGlobal: true,
+      ignoreEnvFile: process.env.NODE_ENV === 'production', // ✅ Agregado
+    }),
+    MongooseModule.forRoot(process.env.DATABASE),
     ResultsModule,
-    ScheduleModule.forRoot(), // ✅ Activamos la funcionalidad de cron jobs
+    ScheduleModule.forRoot(),
     LodgingModule,
     UsersModule,
     TeamModule,
@@ -39,28 +41,20 @@ import { User, UserSchema } from './schemas/user.schema';
     RestaurantsModule,
     LeagueModule,
     CarRentalModule,
-    MongooseModule.forFeature([{name: User.name, schema: UserSchema}]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
-  controllers: [
-    AppController,
-  ],
-  providers: [
-    AppService,
-  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
-
-//Require an authorization token for the following controllers
-export class AppModule implements NestModule{
+export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-      consumer
-        .apply(JWTAuthorize)
-        .forRoutes(
-          ResultsController,
-          LodgingController,
-          MatchesController,
-          LocationsController,
-          RestaurantsController,
-          CarRentalController
-        )
+    consumer.apply(JWTAuthorize).forRoutes(
+      ResultsController,
+      LodgingController,
+      MatchesController,
+      LocationsController,
+      RestaurantsController,
+      CarRentalController
+    );
   }
 }
